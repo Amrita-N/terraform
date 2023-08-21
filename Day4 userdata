@@ -1,3 +1,86 @@
+Terraform
+Day 1
+provider "aws" {
+ region="ap-south-1"
+}
+
+resource "aws_instance" "myec2" {
+
+ami= "ami-0d81306eddc614a45"
+instance_type= "t2.micro"
+
+tags={
+ Name="terraform-example"
+}
+
+
+}
+
+
+Day 2
+provider "aws" {
+ region="ap-south-1"
+access_key = "AKIA5NYFT6IKJSH2V7W3"
+  secret_key = "k/7K2iASYGVM609sPw1Uh345c/bqAoAQsKAntfpN"
+}
+
+resource "aws_instance" "myec2" {
+
+ami= "ami-0d81306eddc614a45"
+instance_type= "t2.small"
+vpc_security_group_ids=[aws_security_group.ownsg.id]
+key_name = "tf-key-pair"
+tags={
+ Name="terraform-example"
+}
+}
+
+resource "aws_security_group" "ownsg" {
+ name="own-sg"
+
+ingress {
+ from_port=80
+ to_port=80
+protocol="tcp"
+cidr_blocks=["0.0.0.0/0"]
+}
+ingress {
+ from_port=22
+ to_port=22
+protocol="tcp"
+cidr_blocks=["0.0.0.0/0"]
+}
+
+egress {
+ from_port=0
+ to_port=0
+protocol="-1"
+cidr_blocks=["0.0.0.0/0"]
+}
+
+
+
+
+}
+resource "aws_key_pair" "tf-key-pair" {
+key_name = "tf-key-pair"
+public_key = tls_private_key.rsa.public_key_openssh
+}
+resource "tls_private_key" "rsa" {
+algorithm = "RSA"
+rsa_bits  = 4096
+}
+resource "local_file" "tf-key" {
+content  = tls_private_key.rsa.private_key_pem
+filename = "tf-key-pair"
+}
+
+
+
+
+
+Day 4 
+User data main.tf
 provider "aws" {
   region     = var.region_name
   access_key = "AKIA5NYFT6IKJSH2V7W3"
@@ -6,7 +89,11 @@ provider "aws" {
 
 
 
+
+
+
 resource "aws_instance" "myec2" {
+
   ami                    = "ami-0d81306eddc614a45"
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.ownsg.id]
@@ -14,7 +101,9 @@ resource "aws_instance" "myec2" {
   tags = {
     Name = "terraform-example"
   }
+
   user_data = <<-EOF
+
 #!/bin/bash
 yum install httpd -y
 service httpd start
@@ -23,9 +112,13 @@ touch index.html
 echo "hello from terraform" > index.html
 EOF
 
+
+
 }
+
 resource "aws_security_group" "ownsg" {
   name = "own-sg"
+
   ingress {
     from_port   = var.server_port
     to_port     = var.server_port
@@ -38,12 +131,15 @@ resource "aws_security_group" "ownsg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+
 
 
 }
@@ -59,3 +155,5 @@ resource "local_file" "tf-key" {
   content  = tls_private_key.rsa.private_key_pem
   filename = "tf-key-pair"
 }
+
+
